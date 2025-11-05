@@ -79,3 +79,17 @@ print(f"Focal length fy:               {fy:.4f} pixels")
 print(f"Principal point cx:            {Uo:.4f} pixels")
 print(f"Principal point cy:            {Vo:.4f} pixels")
 
+
+save_or_not = input("Do you want to save the calibration values (yes or no)? ").strip().lower()
+
+if save_or_not == "yes":
+    np.savez(
+        'camera_calibration_data.npz',
+        camera_matrix=intrinsic_matrix,
+        dist_coeffs=distortion_coefficents,
+        rvecs=orientation,
+        tvecs=position
+    )
+    print("\n✅ Calibration data saved to 'camera_calibration_data.npz'")
+else:
+    print("\n❎ Calibration data not saved.")
