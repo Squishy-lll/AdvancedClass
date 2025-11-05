@@ -1,9 +1,10 @@
 import numpy as np
 import cv2 as cv
 import glob
+import os
 
-# measured side length of a chessboard square
-square_size = 0.1
+# measured side length of a chessboard square in mm
+square_size = 22.15
 
 # input the amount of rows and columns that corners are visible
 row_size = 7
@@ -29,17 +30,22 @@ pixel_search_area = (11,11)
 # deadzone for subpixel estimate for corner coords (set to None)
 deadzone = (-1,-1)
 
-path = r'c:\Users\camel\Desktop\python_work\AdvancedClass\chessboard_images'
-images = glob.glob("path\*.jpg")
+path = "chessboard_photos/Cameron's_iphone"
+images = glob.glob(f"{path}/*.jpeg")
 
 for image in images:
+
+    filename = os.path.basename(image)
 
     img = cv.imread(image)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-    corners_found, corner_points = cv.findChessboardCorners(image, (row_size,column_size), None)
+    corners_found, corner_points = cv.findChessboardCorners(gray, (row_size,column_size), None)
 
-    if corners_found == True:
+    if corners_found:
+
+        print(f'{filename} is a good image')
+        
 
         objpoints.append(real_board_points)
 
@@ -47,12 +53,29 @@ for image in images:
         refined_corner_points =  cv.cornerSubPix(gray,corner_points, pixel_search_area, deadzone, criteria)
         imgpoints.append(refined_corner_points)
 
-        # Draw and display the corners
+        # Draw and display the corners in a resized frame for clarity
         cv.drawChessboardCorners(img, (row_size,column_size), refined_corner_points, corners_found)
-        cv.imshow('img', img)
-        cv.waitKey(500) # pause for half a second to examine process went well
+        scale = 0.2
+        resized = cv.resize(img, None, fx=scale, fy=scale)
+        cv.imshow('img', resized)
+        cv.waitKey(0) # manually click to go to next image
+    else:
 
-cv.destroyAllWindows()
+        print(f'{filename} is a bad image')
 
-error, calibration_matrix, distortion_coefficents, orientation, position = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+
+error, intrinsic_matrix, distortion_coefficents, orientation, position = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+
+# Extract intrinsic parameters from the calibration matrix
+fx = intrinsic_matrix[0, 0]
+fy = intrinsic_matrix[1, 1]
+Uo = intrinsic_matrix[0, 2]
+Vo = intrinsic_matrix[1, 2]
+
+print("\n================ CAMERA INTRINSICS ==================")
+print(f"RMS reprojection error:        {error:.4f}")
+print(f"Focal length fx:               {fx:.4f} pixels")
+print(f"Focal length fy:               {fy:.4f} pixels")
+print(f"Principal point cx:            {Uo:.4f} pixels")
+print(f"Principal point cy:            {Vo:.4f} pixels")
 
